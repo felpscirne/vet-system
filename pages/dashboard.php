@@ -161,12 +161,6 @@ $pageTitle = 'Dashboard - Veterinary System';
                             <strong>Today</strong>
                         </a>
                     </div>
-                    <div class="col-md-6 col-lg-3">
-                        <a href="profile.php" class="btn btn-secondary w-100 py-3">
-                            <i class="fas fa-user-cog fa-2x d-block mb-2"></i>
-                            <strong>Profile</strong>
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>

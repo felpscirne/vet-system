@@ -47,9 +47,6 @@ $userName = $loggedIn ? $_SESSION['user_name'] : '';
                                 <i class="fas fa-user me-1"></i><?php echo htmlspecialchars($userName); ?>
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="profile.php">
-                                    <i class="fas fa-user-edit me-1"></i>Profile
-                                </a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="logout.php">
                                     <i class="fas fa-sign-out-alt me-1"></i>Logout
@@ -58,12 +55,12 @@ $userName = $loggedIn ? $_SESSION['user_name'] : '';
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link" href="login.php">
+                            <a class="nav-link" href="pages/login.php">
                                 <i class="fas fa-sign-in-alt me-1"></i>Login
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="register.php">
+                            <a class="nav-link" href="pages/register.php">
                                 <i class="fas fa-user-plus me-1"></i>Register
                             </a>
                         </li>

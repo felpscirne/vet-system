@@ -5,18 +5,11 @@
             <div class="row">
                 <div class="col-md-6">
                     <h5><i class="fas fa-paw me-2"></i>Veterinary System</h5>
-                    <p class="mb-0">Web Application Development I</p>
-                    <small class="text-muted">Prof. Cleber Schroeder Fonseca - IFRS Rio Grande</small>
+                    <p class="mb-0">Professional Pet Care Management</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="mb-0">
-                        <i class="fas fa-envelope me-2"></i>
-                        <a href="mailto:profcleberfonseca@gmail.com" class="text-white text-decoration-none">
-                            profcleberfonseca@gmail.com
-                        </a>
-                    </p>
                     <small class="text-muted">
-                        &copy; <?php echo date('Y'); ?> IFRS - All rights reserved
+                        &copy; <?php echo date('Y'); ?> Veterinary System - All rights reserved
                     </small>
                 </div>
             </div>

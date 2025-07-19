@@ -142,13 +142,9 @@ $pageTitle = 'Veterinary Appointment System';
     <div class="col-12">
         <div class="card bg-primary text-white">
             <div class="card-body text-center py-5">
-                <h3 class="mb-4">Academic Project</h3>
+                <h3 class="mb-4">Professional Pet Care</h3>
                 <p class="lead mb-0">
-                    Academic project developed for the subject 
-                    <strong>Web Application Development I</strong>
-                </p>
-                <p class="mb-0">
-                    <small>Prof. Cleber Schroeder Fonseca - IFRS Rio Grande</small>
+                    Complete solution for managing your pet's health appointments
                 </p>
             </div>
         </div>

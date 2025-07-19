@@ -8,39 +8,54 @@ if (isLoggedIn()) {
 }
 
 $error = '';
+$success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = sanitizeString($_POST['name'] ?? '');
     $email = sanitizeString($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
     
-    if (empty($email) || empty($password)) {
-        $error = 'Email and password are required.';
+    if (empty($name) || empty($email) || empty($password) || empty($confirmPassword)) {
+        $error = 'All fields are required.';
+    } elseif (strlen($name) < 3) {
+        $error = 'Name must be at least 3 characters.';
     } elseif (!validateEmail($email)) {
         $error = 'Enter a valid email.';
+    } elseif (!validatePassword($password)) {
+        $error = 'Password must be at least 6 characters.';
+    } elseif ($password !== $confirmPassword) {
+        $error = 'Passwords do not match.';
     } else {
         try {
-            $stmt = $pdo->prepare("SELECT id, name, email, password FROM users WHERE email = ?");
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
             $stmt->execute([$email]);
-            $user = $stmt->fetch();
             
-            if ($user && verifyPassword($password, $user['password'])) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['name'];
-                $_SESSION['user_email'] = $user['email'];
-                
-                header('Location: dashboard.php');
-                exit;
+            if ($stmt->fetch()) {
+                $error = 'This email is already registered.';
             } else {
-                $error = 'Invalid email or password.';
+                $passwordHash = hashPassword($password);
+                
+                $stmt = $pdo->prepare("
+                    INSERT INTO users (name, email, password, created_at) 
+                    VALUES (?, ?, ?, NOW())
+                ");
+                
+                if ($stmt->execute([$name, $email, $passwordHash])) {
+                    $success = 'Registration successful! You can now login.';
+                    $name = $email = '';
+                } else {
+                    $error = 'Registration failed. Please try again.';
+                }
             }
         } catch (PDOException $e) {
-            error_log("Login error: " . $e->getMessage());
+            error_log("Registration error: " . $e->getMessage());
             $error = 'Internal error. Please try again.';
         }
     }
 }
 
-$pageTitle = 'Login - Veterinary System';
+$pageTitle = 'Register - Veterinary System';
 ?>
 
 <!DOCTYPE html>
@@ -58,9 +73,9 @@ $pageTitle = 'Login - Veterinary System';
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <i class="fas fa-paw fa-3x mb-3"></i>
-                <h1>Login</h1>
-                <p class="mb-0">Access your account</p>
+                <i class="fas fa-user-plus fa-3x mb-3"></i>
+                <h1>Register</h1>
+                <p class="mb-0">Create your account</p>
             </div>
             
             <div class="auth-body">
@@ -72,7 +87,33 @@ $pageTitle = 'Login - Veterinary System';
                     </div>
                 <?php endif; ?>
                 
+                <?php if ($success): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <?php echo htmlspecialchars($success); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+                
                 <form method="POST" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-user me-1"></i>Full Name
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="name" 
+                               name="name" 
+                               value="<?php echo htmlspecialchars($name ?? ''); ?>"
+                               required 
+                               minlength="3"
+                               maxlength="100"
+                               placeholder="Your full name">
+                        <div class="invalid-feedback">
+                            Name must be between 3 and 100 characters.
+                        </div>
+                    </div>
+                    
                     <div class="mb-3">
                         <label for="email" class="form-label">
                             <i class="fas fa-envelope me-1"></i>Email
@@ -83,13 +124,14 @@ $pageTitle = 'Login - Veterinary System';
                                name="email" 
                                value="<?php echo htmlspecialchars($email ?? ''); ?>"
                                required 
+                               maxlength="150"
                                placeholder="your@email.com">
                         <div class="invalid-feedback">
                             Enter a valid email.
                         </div>
                     </div>
                     
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label for="password" class="form-label">
                             <i class="fas fa-lock me-1"></i>Password
                         </label>
@@ -100,7 +142,7 @@ $pageTitle = 'Login - Veterinary System';
                                    name="password" 
                                    required 
                                    minlength="6"
-                                   placeholder="Your password">
+                                   placeholder="Minimum 6 characters">
                             <button class="btn btn-outline-secondary" 
                                     type="button" 
                                     id="togglePassword">
@@ -108,22 +150,38 @@ $pageTitle = 'Login - Veterinary System';
                             </button>
                         </div>
                         <div class="invalid-feedback">
-                            Password is required.
+                            Password must be at least 6 characters.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="confirm_password" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Confirm Password
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="confirm_password" 
+                               name="confirm_password" 
+                               required 
+                               minlength="6"
+                               placeholder="Repeat password">
+                        <div class="invalid-feedback">
+                            Passwords must match.
                         </div>
                     </div>
                     
                     <div class="d-grid mb-3">
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                            <i class="fas fa-user-plus me-2"></i>Register
                         </button>
                     </div>
                 </form>
                 
                 <div class="text-center">
                     <p class="mb-0">
-                        Don't have an account? 
-                        <a href="register.php" class="text-decoration-none">
-                            <i class="fas fa-user-plus me-1"></i>Register
+                        Already have an account? 
+                        <a href="login.php" class="text-decoration-none">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
                         </a>
                     </p>
                     <hr class="my-3">
@@ -164,8 +222,20 @@ $pageTitle = 'Login - Veterinary System';
                 form.classList.add('was-validated');
             });
             
+            const nameInput = document.getElementById('name');
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirm_password');
+            
+            nameInput.addEventListener('input', function() {
+                if (this.value && this.value.length < 3) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                } else if (this.value) {
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                }
+            });
             
             emailInput.addEventListener('input', function() {
                 if (this.value && !this.checkValidity()) {
@@ -185,10 +255,29 @@ $pageTitle = 'Login - Veterinary System';
                     this.classList.add('is-valid');
                     this.classList.remove('is-invalid');
                 }
+                
+                validatePasswordConfirmation();
             });
+            
+            confirmPasswordInput.addEventListener('input', function() {
+                validatePasswordConfirmation();
+            });
+            
+            function validatePasswordConfirmation() {
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                
+                if (confirmPassword && password !== confirmPassword) {
+                    confirmPasswordInput.classList.add('is-invalid');
+                    confirmPasswordInput.classList.remove('is-valid');
+                } else if (confirmPassword) {
+                    confirmPasswordInput.classList.add('is-valid');
+                    confirmPasswordInput.classList.remove('is-invalid');
+                }
+            }
         });
         
-        document.getElementById('email').focus();
+        document.getElementById('name').focus();
     </script>
 </body>
 </html>
