@@ -23,29 +23,31 @@ try {
     $stmt = $pdo->prepare("
         SELECT 
             a.*,
+            u.name as user_name,
             DATE_FORMAT(a.appointment_date, '%d/%m/%Y') as formatted_date,
             TIME_FORMAT(a.appointment_time, '%H:%i') as formatted_time,
             DATEDIFF(a.appointment_date, CURDATE()) as days_remaining
         FROM appointments a
-        WHERE a.user_id = ? 
-        AND a.appointment_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+        JOIN users u ON a.user_id = u.id
+        WHERE a.appointment_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
         ORDER BY a.appointment_date ASC, a.appointment_time ASC
         LIMIT 5
     ");
-    $stmt->execute([$userId]);
+    $stmt->execute();
     $upcomingAppointments = $stmt->fetchAll();
     
     $stmt = $pdo->prepare("
         SELECT 
             a.*,
+            u.name as user_name,
             DATE_FORMAT(a.appointment_date, '%d/%m/%Y') as formatted_date,
             TIME_FORMAT(a.appointment_time, '%H:%i') as formatted_time
         FROM appointments a
-        WHERE a.user_id = ?
+        JOIN users u ON a.user_id = u.id
         ORDER BY a.created_at DESC
         LIMIT 5
     ");
-    $stmt->execute([$userId]);
+    $stmt->execute();
     $recentAppointments = $stmt->fetchAll();
     
 } catch (PDOException $e) {
@@ -143,19 +145,19 @@ $pageTitle = 'Dashboard - Veterinary System';
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-6 col-lg-3">
+                    <div class="col-md-4">
                         <a href="new_appointment.php" class="btn btn-primary w-100 py-3">
                             <i class="fas fa-plus-circle fa-2x d-block mb-2"></i>
                             <strong>New Appointment</strong>
                         </a>
                     </div>
-                    <div class="col-md-6 col-lg-3">
+                    <div class="col-md-4">
                         <a href="appointments.php" class="btn btn-info w-100 py-3">
                             <i class="fas fa-list fa-2x d-block mb-2"></i>
                             <strong>View All</strong>
                         </a>
                     </div>
-                    <div class="col-md-6 col-lg-3">
+                    <div class="col-md-4">
                         <a href="appointments.php?filter=today" class="btn btn-warning w-100 py-3">
                             <i class="fas fa-calendar-day fa-2x d-block mb-2"></i>
                             <strong>Today</strong>
@@ -194,6 +196,7 @@ $pageTitle = 'Dashboard - Veterinary System';
                                         <h6 class="mb-1">
                                             <i class="fas fa-paw me-1 text-primary"></i>
                                             <?php echo htmlspecialchars($appointment['animal_name']); ?>
+                                            <small class="text-muted">by <?php echo htmlspecialchars($appointment['user_name']); ?></small>
                                         </h6>
                                         <p class="mb-1 text-muted small">
                                             <i class="fas fa-clock me-1"></i>
@@ -251,7 +254,7 @@ $pageTitle = 'Dashboard - Veterinary System';
                                         <h6 class="mb-1">
                                             <i class="fas fa-paw me-1 text-veterinary"></i>
                                             <?php echo htmlspecialchars($appointment['animal_name']); ?>
-                                            <small class="text-muted">(<?php echo $appointment['animal_age']; ?> years)</small>
+                                            <small class="text-muted">by <?php echo htmlspecialchars($appointment['user_name']); ?> (<?php echo $appointment['animal_age']; ?> years)</small>
                                         </h6>
                                         <p class="mb-1 text-muted small">
                                             <i class="fas fa-calendar me-1"></i>
@@ -262,10 +265,16 @@ $pageTitle = 'Dashboard - Veterinary System';
                                         </small>
                                     </div>
                                     <div>
-                                        <a href="edit_appointment.php?id=<?php echo $appointment['id']; ?>" 
-                                           class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
+                                        <?php if ($appointment['user_id'] == $userId): ?>
+                                            <a href="edit_appointment.php?id=<?php echo $appointment['id']; ?>" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="text-muted small">
+                                                <i class="fas fa-eye me-1"></i>View only
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>

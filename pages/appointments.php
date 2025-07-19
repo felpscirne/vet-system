@@ -22,8 +22,8 @@ $filter = $_GET['filter'] ?? 'all';
 $search = sanitizeString($_GET['search'] ?? '');
 $sort = $_GET['sort'] ?? 'date_desc';
 
-$whereClause = "WHERE a.user_id = ?";
-$params = [$userId];
+$whereClause = "WHERE 1=1";
+$params = [];
 
 switch ($filter) {
     case 'today':
@@ -37,6 +37,10 @@ switch ($filter) {
         break;
     case 'this_week':
         $whereClause .= " AND a.appointment_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)";
+        break;
+    case 'my_appointments':
+        $whereClause .= " AND a.user_id = ?";
+        $params[] = $userId;
         break;
 }
 
@@ -66,6 +70,7 @@ try {
     $sql = "
         SELECT 
             a.*,
+            u.name as user_name,
             DATE_FORMAT(a.appointment_date, '%d/%m/%Y') as formatted_date,
             TIME_FORMAT(a.appointment_time, '%H:%i') as formatted_time,
             DATE_FORMAT(a.created_at, '%d/%m/%Y at %H:%i') as created_formatted,
@@ -76,6 +81,7 @@ try {
             END as appointment_status,
             DATEDIFF(a.appointment_date, CURDATE()) as days_remaining
         FROM appointments a
+        JOIN users u ON a.user_id = u.id
         $whereClause
         $orderClause
     ";
@@ -84,7 +90,7 @@ try {
     $stmt->execute($params);
     $appointments = $stmt->fetchAll();
     
-    $sqlCount = "SELECT COUNT(*) as total FROM appointments a $whereClause";
+    $sqlCount = "SELECT COUNT(*) as total FROM appointments a JOIN users u ON a.user_id = u.id $whereClause";
     $stmtCount = $pdo->prepare($sqlCount);
     $stmtCount->execute($params);
     $totalAppointments = $stmtCount->fetch()['total'];
@@ -106,7 +112,7 @@ $pageTitle = 'My Appointments - Veterinary System';
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2>
-                    <i class="fas fa-calendar-alt me-2"></i>My Appointments
+                    <i class="fas fa-calendar-alt me-2"></i>All Appointments
                 </h2>
                 <p class="text-muted mb-0">
                     <?php echo $totalAppointments; ?> appointment(s) found
@@ -141,7 +147,8 @@ $pageTitle = 'My Appointments - Veterinary System';
                     <div class="col-md-3">
                         <label for="filter" class="form-label">Filter by:</label>
                         <select class="form-select" id="filter" name="filter">
-                            <option value="all" <?php echo $filter === 'all' ? 'selected' : ''; ?>>All</option>
+                            <option value="all" <?php echo $filter === 'all' ? 'selected' : ''; ?>>All Appointments</option>
+                            <option value="my_appointments" <?php echo $filter === 'my_appointments' ? 'selected' : ''; ?>>My Appointments</option>
                             <option value="today" <?php echo $filter === 'today' ? 'selected' : ''; ?>>Today</option>
                             <option value="this_week" <?php echo $filter === 'this_week' ? 'selected' : ''; ?>>This Week</option>
                             <option value="future" <?php echo $filter === 'future' ? 'selected' : ''; ?>>Future</option>
@@ -208,7 +215,10 @@ $pageTitle = 'My Appointments - Veterinary System';
                                     <i class="fas fa-paw me-2 text-primary"></i>
                                     <?php echo htmlspecialchars($appointment['animal_name']); ?>
                                 </h5>
-                                <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <?php if ($appointment['user_id'] != $userId): ?>
+                                        <small class="text-muted">by <?php echo htmlspecialchars($appointment['user_name']); ?></small>
+                                    <?php endif; ?>
                                     <?php if ($appointment['appointment_status'] === 'today'): ?>
                                         <span class="badge bg-warning">Today</span>
                                     <?php elseif ($appointment['appointment_status'] === 'future'): ?>
@@ -263,7 +273,7 @@ $pageTitle = 'My Appointments - Veterinary System';
                             
                             <div class="card-footer bg-transparent">
                                 <div class="d-flex gap-2 justify-content-end">
-                                    <?php if ($appointment['appointment_status'] !== 'past'): ?>
+                                    <?php if ($appointment['appointment_status'] !== 'past' && $appointment['user_id'] == $userId): ?>
                                         <a href="edit_appointment.php?id=<?php echo $appointment['id']; ?>" 
                                            class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-edit me-1"></i>Edit
@@ -273,9 +283,13 @@ $pageTitle = 'My Appointments - Veterinary System';
                                            data-item="this appointment">
                                             <i class="fas fa-trash me-1"></i>Delete
                                         </a>
-                                    <?php else: ?>
+                                    <?php elseif ($appointment['appointment_status'] === 'past'): ?>
                                         <span class="text-muted small">
                                             <i class="fas fa-check-circle me-1"></i>Appointment completed
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-muted small">
+                                            <i class="fas fa-eye me-1"></i>View only
                                         </span>
                                     <?php endif; ?>
                                 </div>

@@ -33,6 +33,11 @@ $userName = $loggedIn ? $_SESSION['user_name'] : '';
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="appointments.php">
+                                <i class="fas fa-list me-1"></i>All Appointments
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="new_appointment.php">
                                 <i class="fas fa-plus me-1"></i>New Appointment
                             </a>
@@ -47,7 +52,6 @@ $userName = $loggedIn ? $_SESSION['user_name'] : '';
                                 <i class="fas fa-user me-1"></i><?php echo htmlspecialchars($userName); ?>
                             </a>
                             <ul class="dropdown-menu">
-                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="logout.php">
                                     <i class="fas fa-sign-out-alt me-1"></i>Logout
                                 </a></li>
